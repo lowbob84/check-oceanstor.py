@@ -87,7 +87,7 @@ OK: STORAGE POOL NLSAS-R6-01 health status: Normal running status: Online
 
 1. Storage Array have active WARNING: "The number of event logs is about to reach the upper limit of 50000."\
 Details: This is because all ssh logins are put into the audit log.\
-Resolution: Add server for log dumps on OceanStor or go to Alarm Settings and mask alarm "The Space That Stores Event Logs Is To Be Used Up" in event alarms.
+Resolution: Add server for log dumps on OceanStor or go to Alarm Settings and mask alarm "The Space That Stores Event Logs Is To Be Used Up" in event alarms (Alarm Type: "event").
 
 2. Integrated Storage Manager (ISM) sends warning message "Details: The CPU usage of process *ismcli* in controller (controller enclosure CTE0, controller 0A) exceeds the threshold 50%."\
 Details: ISM CLI gets to much load on CPU when you are doing concurrent querries from nagios\
