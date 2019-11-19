@@ -93,20 +93,24 @@ if __name__ == "__main__":
             set_exit_code(2)
 
         # Check if there are any critical DISK DOMAINs by Running status
-        if any( line.split()[4] in failed_running_status for line in lun_lines ):
+        if any( line.split()[3] in failed_running_status for line in lun_lines ):
             
             # Clear OK/Critical message set by Health Status, because Running is Critical
             output_info = ""
-            output_info += "CRITICAL: Check your STORAGE POOL status \n"
+            output_info += "CRITICAL: Check your DISK DOMAIN status \n"
             set_exit_code(2)
 
         for line in lun_lines:
             # Assign values
             name, health_status, running_status = line.split()[1], line.split()[2], line.split()[3]
 
-            # Check for errors
+            # Check for errors in health status
             if health_status == "Normal":
-                output_info += "OK: DISK DOMAIN {} health status: {} running status: {}\n".format(name, health_status, running_status)
+                # Check for errors in running status
+                if running_status in failed_running_status:
+                    output_info += "CRITICAL: DISK DOMAIN {} health status: {} running status: {}\n".format(name, health_status, running_status)
+                else:
+                    output_info += "OK: DISK DOMAIN {} health status: {} running status: {}\n".format(name, health_status, running_status)
             else:
                 output_info += "CRITICAL: DISK DOMAIN {} health status: {} running status: {}\n".format(name, health_status, running_status)
                 
@@ -129,20 +133,24 @@ if __name__ == "__main__":
             set_exit_code(2)
 
         # Check if there are any critical EXPANSION MODULEs by Running status
-        if any( line.split()[4] in failed_running_status for line in lun_lines ):
+        if any( line.split()[2] in failed_running_status for line in lun_lines ):
 
             # Clear OK/Critical message set by Health Status, because Running is Critical
             output_info = ""
-            output_info += "CRITICAL: Check your STORAGE POOL status \n"
+            output_info += "CRITICAL: Check your EXPANSION MODULEs status \n"
             set_exit_code(2)
 
         for line in lun_lines:
             # Assign values
             expansion_id, health_status, running_status = line.split()[0], line.split()[1], line.split()[2]
 
-            # Check for errors
+            # Check for errors in health status
             if health_status == "Normal":
-                output_info += "OK: EXPANSION MODULE {} health status: {} running status: {}\n".format(expansion_id, health_status, running_status)
+                # Check for errors in running status
+                if running_status in failed_running_status:
+                    output_info += "CRITICAL: EXPANSION MODULE {} health status: {} running status: {}\n".format(expansion_id, health_status, running_status)
+                else:
+                    output_info += "OK: EXPANSION MODULE {} health status: {} running status: {}\n".format(expansion_id, health_status, running_status)
             else:
                 output_info += "CRITICAL: EXPANSION MODULE {} health status: {} running status: {}\n".format(expansion_id, health_status, running_status)
                 
