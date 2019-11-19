@@ -9,7 +9,7 @@ if __name__ == "__main__":
     output_info = ""
     # OceanStor failed Health and Running status
     failed_health_status = ["Offline", "Pre-fail", "Fault", "--"]
-    failed_running_status = ["Offline", "Reconstruction", "--"]
+    failed_running_status = ["Offline", "Reconstruction", "Balancing", "--"]
 
     def check_empty_respone():
         pass
@@ -85,11 +85,19 @@ if __name__ == "__main__":
         if len(lun_lines) == 0:
             return "OK: There are no DISK DOMAINs defined\n"
         
-        # Check if there are any critical DISK DOMAINs
+        # Check if there are any critical DISK DOMAINs by Health status
         if not any( line.split()[2] in failed_health_status for line in lun_lines ):
             output_info += "OK: All DISK DOMAINs Online \n"
         else:
             output_info += "CRITICAL: check your DISK DOMAIN status \n"
+            set_exit_code(2)
+
+        # Check if there are any critical DISK DOMAINs by Running status
+        if any( line.split()[4] in failed_running_status for line in lun_lines ):
+            
+            # Clear OK/Critical message set by Health Status, because Running is Critical
+            output_info = ""
+            output_info += "CRITICAL: Check your STORAGE POOL status \n"
             set_exit_code(2)
 
         for line in lun_lines:
@@ -113,11 +121,19 @@ if __name__ == "__main__":
         if len(lun_lines) == 0:
             return "OK: There are no ESXPANSIOM MODULEs defined\n"
         
-        # Check if there are any critical EXPANSION MODULEs
+        # Check if there are any critical EXPANSION MODULEs by Health status
         if not any( line.split()[1] in failed_health_status for line in lun_lines ):
             output_info += "OK: All EXPANSION MODULEs Online \n"
         else:
             output_info += "CRITICAL: check your EXPANSION MODULEs status \n"
+            set_exit_code(2)
+
+        # Check if there are any critical EXPANSION MODULEs by Running status
+        if any( line.split()[4] in failed_running_status for line in lun_lines ):
+
+            # Clear OK/Critical message set by Health Status, because Running is Critical
+            output_info = ""
+            output_info += "CRITICAL: Check your STORAGE POOL status \n"
             set_exit_code(2)
 
         for line in lun_lines:
@@ -169,10 +185,18 @@ if __name__ == "__main__":
         if len(lun_lines) == 0:
             return "OK: There are no STORAGE POOLs defined\n"
         
-        # Check if there are any critical STORAGE POOLs
+        # Check if there are any critical STORAGE POOLs by Health status
         if not any( line.split()[3] in failed_health_status for line in lun_lines ):
             output_info += "OK: All STORAGE POOLs Online \n"
         else:
+            output_info += "CRITICAL: Check your STORAGE POOL status \n"
+            set_exit_code(2)
+
+        # Check if there are any critical STORAGE POOLs by Running status
+        if any( line.split()[4] in failed_running_status for line in lun_lines ):
+            
+            # Clear OK/Critical message set by Health Status, because Running is Critical
+            output_info = ""
             output_info += "CRITICAL: Check your STORAGE POOL status \n"
             set_exit_code(2)
 
