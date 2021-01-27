@@ -38,6 +38,7 @@ Check Huawei Oceanstor through SSH
         lsexpansionmodule - show expansiom module status
         lsinitiator - show initiator status (prints alias name for initiator)
         lsstoragepool - show storage_pool general status
+        lspsu - show PSU status
         lsallstatuses - show all above in one check
 
 optional arguments:
@@ -81,6 +82,12 @@ OK: EXPANSION MODULE DAE010.B health status: Normal running status: Running
 
 OK: All STORAGE POOLs Online
 OK: STORAGE POOL NLSAS-R6-01 health status: Normal running status: Online
+
+OK: All PSU Online
+OK: PSU CTE0.PSU0 health status: Normal running status: Online
+OK: PSU CTE0.PSU1 health status: Normal running status: Online
+OK: PSU DAE010.PSU0 health status: Normal running status: Online
+OK: PSU DAE010.PSU1 health status: Normal running status: Online
 ```
 
 ## 4. KNOWN ISSUES

@@ -1,5 +1,6 @@
 import paramiko
 import sys, argparse
+import re
 from argparse import RawTextHelpFormatter
 
 if __name__ == "__main__":
@@ -8,7 +9,7 @@ if __name__ == "__main__":
     exit_code = 0
     output_info = ""
     # OceanStor failed Health and Running status
-    failed_health_status = ["Offline", "Pre-fail", "Fault", "--"]
+    failed_health_status = ["Offline", "Pre-fail", "Fault", "No Input", "--"]
     failed_running_status = ["Offline", "Reconstruction", "Balancing", "--"]
 
     def check_empty_respone():
@@ -22,21 +23,21 @@ if __name__ == "__main__":
 
     def lslun():
         ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command('show lun general')
-        lun_lines = ssh_stdout.readlines()[4:]
+        ssh_lines = ssh_stdout.readlines()[4:]
         output_info = ""
         
         # return if there are no entries on storage system
-        if len(lun_lines) == 0:
+        if len(ssh_lines) == 0:
             return "OK: There are no LUNs defined\n"
             
         # Check if there are any critical LUNs
-        if not any( line.split()[4] in failed_health_status for line in lun_lines ):
+        if not any( line.split()[4] in failed_health_status for line in ssh_lines ):
             output_info += "OK: All LUNs Online \n"
         else:
             output_info += "CRITICAL: check your LUN status below \n"
             set_exit_code(2)
 
-        for line in lun_lines:
+        for line in ssh_lines:
             # Assign values
             name, status = line.split()[1], line.split()[4]
 
@@ -50,21 +51,21 @@ if __name__ == "__main__":
 
     def lsdisk():
         ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command('show disk general')
-        lun_lines = ssh_stdout.readlines()[4:]
+        ssh_lines = ssh_stdout.readlines()[4:]
         output_info = ""
         
         # return if there are no entries on storage system
-        if len(lun_lines) == 0:
+        if len(ssh_lines) == 0:
             return "OK: There are no DISKs defined\n"
         
         # Check if there are any critical DISKs
-        if not any( line.split()[1] in failed_health_status for line in lun_lines ):
+        if not any( line.split()[1] in failed_health_status for line in ssh_lines ):
             output_info += "OK: All DISKs Online and Healthy \n"
         else:
             output_info += "CRITICAL: check your DISK status below \n"
             set_exit_code(2)
 
-        for line in lun_lines:
+        for line in ssh_lines:
             # Assign values
             slot, status, disk_type, capacity, role = line.split()[0], line.split()[1], line.split()[3], line.split()[4], line.split()[5]
 
@@ -78,29 +79,29 @@ if __name__ == "__main__":
 
     def lsdiskdomain():
         ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command('show disk_domain general')
-        lun_lines = ssh_stdout.readlines()[4:]
+        ssh_lines = ssh_stdout.readlines()[4:]
         output_info = ""
         
         # return if there are no entries on storage system
-        if len(lun_lines) == 0:
+        if len(ssh_lines) == 0:
             return "OK: There are no DISK DOMAINs defined\n"
         
         # Check if there are any critical DISK DOMAINs by Health status
-        if not any( line.split()[2] in failed_health_status for line in lun_lines ):
+        if not any( line.split()[2] in failed_health_status for line in ssh_lines ):
             output_info += "OK: All DISK DOMAINs Online \n"
         else:
             output_info += "CRITICAL: check your DISK DOMAIN status \n"
             set_exit_code(2)
 
         # Check if there are any critical DISK DOMAINs by Running status
-        if any( line.split()[3] in failed_running_status for line in lun_lines ):
+        if any( line.split()[3] in failed_running_status for line in ssh_lines ):
             
             # Clear OK/Critical message set by Health Status, because Running is Critical
             output_info = ""
             output_info += "CRITICAL: Check your DISK DOMAIN status \n"
             set_exit_code(2)
 
-        for line in lun_lines:
+        for line in ssh_lines:
             # Assign values
             name, health_status, running_status = line.split()[1], line.split()[2], line.split()[3]
 
@@ -118,29 +119,29 @@ if __name__ == "__main__":
 
     def lsexpansionmodule():
         ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command('show expansion_module')
-        lun_lines = ssh_stdout.readlines()[4:]
+        ssh_lines = ssh_stdout.readlines()[4:]
         output_info = ""
         
         # return if there are no entries on storage system
-        if len(lun_lines) == 0:
+        if len(ssh_lines) == 0:
             return "OK: There are no ESXPANSIOM MODULEs defined\n"
         
         # Check if there are any critical EXPANSION MODULEs by Health status
-        if not any( line.split()[1] in failed_health_status for line in lun_lines ):
+        if not any( line.split()[1] in failed_health_status for line in ssh_lines ):
             output_info += "OK: All EXPANSION MODULEs Online \n"
         else:
             output_info += "CRITICAL: check your EXPANSION MODULEs status \n"
             set_exit_code(2)
 
         # Check if there are any critical EXPANSION MODULEs by Running status
-        if any( line.split()[2] in failed_running_status for line in lun_lines ):
+        if any( line.split()[2] in failed_running_status for line in ssh_lines ):
 
             # Clear OK/Critical message set by Health Status, because Running is Critical
             output_info = ""
             output_info += "CRITICAL: Check your EXPANSION MODULEs status \n"
             set_exit_code(2)
 
-        for line in lun_lines:
+        for line in ssh_lines:
             # Assign values
             expansion_id, health_status, running_status = line.split()[0], line.split()[1], line.split()[2]
 
@@ -158,21 +159,21 @@ if __name__ == "__main__":
 
     def lsinitiator():
         ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command('show initiator')
-        lun_lines = ssh_stdout.readlines()[4:]
+        ssh_lines = ssh_stdout.readlines()[4:]
         output_info = ""
         
         # return if there are no entries on storage system
-        if len(lun_lines) == 0:
+        if len(ssh_lines) == 0:
             return "OK: There are no INITIATORs defined\n"
         
         # Check if there are any critical INITIATORs
-        if not any( line.split()[1] == "Offline" for line in lun_lines ):
+        if not any( line.split()[1] == "Offline" for line in ssh_lines ):
             output_info += "OK: All INITIATORs Online \n"
         else:
             output_info += "WARNING: INITIATOR OFFLINE \n"
             set_exit_code(1)
 
-        for line in lun_lines:
+        for line in ssh_lines:
             # Assign values
             name, status = line.split()[0], line.split()[1]
 
@@ -186,29 +187,29 @@ if __name__ == "__main__":
 
     def lsstoragepool():
         ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command('show storage_pool general')
-        lun_lines = ssh_stdout.readlines()[4:]
+        ssh_lines = ssh_stdout.readlines()[4:]
         output_info = ""
         
         # return if there are no entries on storage system
-        if len(lun_lines) == 0:
+        if len(ssh_lines) == 0:
             return "OK: There are no STORAGE POOLs defined\n"
         
         # Check if there are any critical STORAGE POOLs by Health status
-        if not any( line.split()[3] in failed_health_status for line in lun_lines ):
+        if not any( line.split()[3] in failed_health_status for line in ssh_lines ):
             output_info += "OK: All STORAGE POOLs Online \n"
         else:
             output_info += "CRITICAL: Check your STORAGE POOL status \n"
             set_exit_code(2)
 
         # Check if there are any critical STORAGE POOLs by Running status
-        if any( line.split()[4] in failed_running_status for line in lun_lines ):
+        if any( line.split()[4] in failed_running_status for line in ssh_lines ):
             
             # Clear OK/Critical message set by Health Status, because Running is Critical
             output_info = ""
             output_info += "CRITICAL: Check your STORAGE POOL status \n"
             set_exit_code(2)
 
-        for line in lun_lines:
+        for line in ssh_lines:
             # Assign values
             name, health_status, running_status = line.split()[1], line.split()[3], line.split()[4]
 
@@ -220,6 +221,38 @@ if __name__ == "__main__":
                 
         return output_info
 
+    def lspsu():
+        ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command('show power_supply')
+        ssh_lines = ssh_stdout.readlines()[4:]
+        output_info = ""
+
+        # return if there are no entries on storage system
+        if len(ssh_lines) == 0:
+            output_info += "CRITICAL: No PSUs were found \n"
+            set_exit_code(2)
+
+        # Check if there are any critical STORAGE POOLs
+        if not any( [x for x in re.split("\s{2,}",line) if x][2] in failed_running_status for line in ssh_lines ):
+            output_info += "OK: All PSU Online \n"
+        else:
+            output_info += "CRITICAL: Check your PSU status \n"
+            set_exit_code(2)
+
+        for line in ssh_lines:
+            # split string per double spaces because of status "No Input" at 2nd column
+            split_line = [x for x in re.split("\s{2,}",line) if x]
+
+            # Assign values
+            name, health_status, running_status = split_line[0], split_line[1], split_line[2]
+
+            # Check for errors
+            if running_status == "Online":
+                output_info += "OK: PSU {} health status: {} running status: {}\n".format(name, health_status, running_status)
+            else:
+                output_info += "CRITICAL: PSU {} health status: {} running status: {}\n".format(name, health_status, running_status)
+
+        return output_info
+
     def lsallstatuses():
         global output_info
         output_info += lslun() + "\n"
@@ -228,6 +261,7 @@ if __name__ == "__main__":
         output_info += lsexpansionmodule() + "\n"
         output_info += lsinitiator() + "\n"
         output_info += lsstoragepool() + "\n"
+        output_info += lspsu() + "\n"
         
         return output_info
 
@@ -240,6 +274,7 @@ if __name__ == "__main__":
             "lsexpansionmodule": lsexpansionmodule,
             "lsinitiator": lsinitiator,
             "lsstoragepool": lsstoragepool,
+            "lspsu": lspsu,
             "lsallstatuses": lsallstatuses,
         }
 
@@ -255,6 +290,7 @@ if __name__ == "__main__":
         lsexpansionmodule - show expansiom module status
         lsinitiator - show initiator status (prints alias name for initiator)
         lsstoragepool - show storage_pool general status
+        lspsu - show PSU status
         lsallstatuses - show all above in one check""")
     
     useable_commands = [
@@ -264,6 +300,7 @@ if __name__ == "__main__":
         'lsexpansionmodule', 
         'lsinitiator', 
         'lsstoragepool', 
+        'lspsu',
         'lsallstatuses'
         ]
 
