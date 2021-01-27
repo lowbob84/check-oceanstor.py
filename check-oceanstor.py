@@ -124,7 +124,7 @@ if __name__ == "__main__":
         
         # return if there are no entries on storage system
         if len(ssh_lines) == 0:
-            return "OK: There are no ESXPANSIOM MODULEs defined\n"
+            return "OK: There are no EXPANSION MODULEs defined\n"
         
         # Check if there are any critical EXPANSION MODULEs by Health status
         if not any( line.split()[1] in failed_health_status for line in ssh_lines ):
@@ -287,7 +287,7 @@ if __name__ == "__main__":
         lslun - show lun general status
         lsdisk - show disk general status
         lsdiskdomain - show disk_domain general status
-        lsexpansionmodule - show expansiom module status
+        lsexpansionmodule - show expansion module status
         lsinitiator - show initiator status (prints alias name for initiator)
         lsstoragepool - show storage_pool general status
         lspsu - show PSU status

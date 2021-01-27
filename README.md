@@ -35,7 +35,7 @@ Check Huawei Oceanstor through SSH
         lslun - show lun general status
         lsdisk - show disk general status
         lsdiskdomain - show disk_domain general status
-        lsexpansionmodule - show expansiom module status
+        lsexpansionmodule - show expansion module status
         lsinitiator - show initiator status (prints alias name for initiator)
         lsstoragepool - show storage_pool general status
         lspsu - show PSU status
