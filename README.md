@@ -2,7 +2,7 @@
 
 It serves as a hardware check of the Huawei OceanStor and was tested on OceanStor 2600V3 and OceanStor 5500v5.
 
-## PLEASE BARE IN MIND THAT YOU STILL BETTER IMPLEMENT MAIL ALARMS ON THE STORAGE ITSELF
+## PLEASE BARE IN MIND THAT YOU STILL BETTER IMPLEMENT MAIL ALARMS ON THE STORAGE SYSTEM ITSELF
 
 ## 1. Configuration of SSH on OceanStor and nagios/monitoring server
 
@@ -24,9 +24,7 @@ It serves as a hardware check of the Huawei OceanStor and was tested on OceanSto
 **Check if the user which will be monitoring the storage system has the private key.**
 
 ```bash
-usage: check-oceanstor.py [-h] -H <HOSTNAME> -u <USERNAME> -k
-                          <KEY_FILE_DESTINATION> -c
-                          <COMMAND1,COMMAND2,...,COMMANDX>
+usage: check-oceanstor.py [-h] -H <HOSTNAME> -u <USERNAME> -k <KEY_FILE_DESTINATION> -c <COMMAND1,COMMAND2,...,COMMANDX> [-C <CRITICAL_PERC>] [-W <WARNING_PERC>] [-sp <SP_NAME>]
 
 Check Huawei Oceanstor through SSH
 
@@ -39,7 +37,8 @@ Check Huawei Oceanstor through SSH
         lsinitiator - show initiator status (prints alias name for initiator)
         lsstoragepool - show storage_pool general status
         lspsu - show PSU status
-        lsallstatuses - show all above in one check
+        capacitystoragepool - used with -W and -C arguments, checks free capacity with configured arguments
+        lsallstatuses - show all checks that starts with ls in one output
 
 optional arguments:
   -h, --help            show this help message and exit
@@ -47,9 +46,14 @@ optional arguments:
   -u <USERNAME>, --username <USERNAME>
   -k <KEY_FILE_DESTINATION>, --key_filename <KEY_FILE_DESTINATION>
   -c <COMMAND1,COMMAND2,...,COMMANDX>, --command <COMMAND1,COMMAND2,...,COMMANDX>
+  -C <CRITICAL_PERC>, --critical <CRITICAL_PERC>
+  -W <WARNING_PERC>, --warning <WARNING_PERC>
+  -sp <SP_NAME>, --storagepool <SP_NAME>
 ```
 
 ## 3. SAMPLE OUTPUT
+
+Output for lsallstatuses:
 
 ```text
 OK: All LUNs Online
@@ -90,15 +94,33 @@ OK: PSU DAE010.PSU0 health status: Normal running status: Online
 OK: PSU DAE010.PSU1 health status: Normal running status: Online
 ```
 
+Ouput for capacitystoragepool:
+
+```text
+OK: STORAGE POOL SP-1-RAID-TP has 11.4% of free space left (1.027TB free of 9.008TB total pool size is left)
+```
+
+Error sample for capacitystoragepool
+
+```text
+
+WARNING: STORAGE POOL with name SP-1-RAID-TP was not found
+
+Or not enough space witch -W 25 -C 20 arguments:
+
+CRITICAL: STORAGE POOL SP-1-RAID-TP has only 11.38% of free space left (only 1.025TB free of 9.008TB total pool size is left)
+
+```
+
 ## 4. KNOWN ISSUES
 
 1. Storage Array have active WARNING: "The number of event logs is about to reach the upper limit of 50000."\
 Details: This is because all ssh logins are put into the audit log.\
-Resolution: Add server for log dumps on OceanStor or go to Alarm Settings and mask alarm "The Space That Stores Event Logs Is To Be Used Up" in event alarms (Alarm Type: "event").
+Resolution: Add syslog server for log dumps on OceanStor or go to Alarm Settings and mask alarm "The Space That Stores Event Logs Is To Be Used Up" in event alarms (Alarm Type: "event").
 
 2. Integrated Storage Manager (ISM) sends warning message "Details: The CPU usage of process *ismcli* in controller (controller enclosure CTE0, controller 0A) exceeds the threshold 50%."\
 Details: ISM CLI gets to much load on CPU when you are doing concurrent querries from nagios\
-Resolution: Monitor your OceanStor by using only one command such as -> ```python2.7 check-oceanstor.py -c lslun,lsdisk,lsinitiator``` or even ```python2.7 check-oceanstor.py -c lsallstatuses```
+Resolution: Monitor your OceanStor by using only one command such as -> ```python check-oceanstor.py -c lslun,lsdisk,lsinitiator``` or even ```python check-oceanstor.py -c lsallstatuses```
 
 ## 5. TODO List
 

@@ -12,6 +12,8 @@ if __name__ == "__main__":
     failed_health_status = ["Offline", "Pre-fail", "Fault", "No Input", "--"]
     failed_running_status = ["Offline", "Reconstruction", "Balancing", "--"]
 
+    space_bytes_dict = {"GB": 1024*1024*1024, "TB": 1024*1024*1024*1024, "PB": 1024*1024*1024*1024*1024}
+
     def check_empty_respone():
         pass
 
@@ -253,6 +255,89 @@ if __name__ == "__main__":
 
         return output_info
 
+    def capacitystoragepool():
+        ssh_stdin, ssh_stdout, ssh_stderr = ssh.exec_command('show storage_pool general')
+        ssh_lines = ssh_stdout.readlines()[4:]
+        output_info = ""
+        
+        # return if there are no entries on storage system
+        if len(ssh_lines) == 0:
+            return "OK: There are no STORAGE POOLs defined\n"
+        
+        try:
+            # check if warning isn't lower than critical
+            if warning <= critical:
+                output_info += "WARNING: --warning cannot be lesser or equal --critical"
+                set_exit_code(1)
+                return output_info
+
+            # If argument --storagepool was specified than check this pool else go with all storage pools check
+            if "storage_pool_name" in globals():
+
+                # Initialize variable which checks if storage pool with specified name exists
+                sp_was_found = False
+                
+                for line in ssh_lines:
+                    # Assign values
+                    name, total_space, free_space = line.split()[1], line.split()[5], line.split()[6]
+
+                    # If there is storage pool with specified name
+                    if name == storage_pool_name:
+                        # Set variable to check if storage pool with specified name exists
+                        sp_was_found = True
+
+                        # Set variables for storage checks
+                        total_space_bytes = float(total_space[:-2]) * space_bytes_dict[total_space[-2:]]
+                        free_space_bytes = float(free_space[:-2]) * space_bytes_dict[free_space[-2:]]
+                        
+                        # Check free space percentage
+                        free_space_perc = free_space_bytes / total_space_bytes * 100
+
+                        if free_space_perc <= critical:
+                            output_info += "CRITICAL: STORAGE POOL {} has only {}% of free space left (only {} free of {} total pool size is left)\n".format(name, round(free_space_perc, 2), free_space, total_space)
+                            set_exit_code(2)
+                        elif free_space_perc <= warning:
+                            output_info += "WARNING: STORAGE POOL {} has only {}% of free space left (only {} free of {} total pool size is left)\n".format(name, round(free_space_perc, 2), free_space, total_space)
+                            set_exit_code(1)
+                        else:
+                            output_info += "OK: STORAGE POOL {} has {}% of free space left ({} free of {} total pool size is left)\n".format(name, round(free_space_perc, 2), free_space, total_space)
+
+                    # If storage pool with specified name was not found than show warning message
+                    if not sp_was_found:
+                        output_info += "WARNING: STORAGE POOL with name {} was not found\n".format(storage_pool_name)
+                        set_exit_code(1)
+
+            else:
+
+                for line in ssh_lines:
+                    # Assign values
+                    name, total_space, free_space = line.split()[1], line.split()[5], line.split()[6]
+                    
+                    # Set variables for storage checks
+                    total_space_bytes = float(total_space[:-2]) * space_bytes_dict[total_space[-2:]]
+                    free_space_bytes = float(free_space[:-2]) * space_bytes_dict[free_space[-2:]]
+
+                    # Check free space percentage
+                    free_space_perc = free_space_bytes / total_space_bytes * 100
+
+                    if free_space_perc <= critical:
+                        output_info += "CRITICAL: STORAGE POOL {} has only {}% of free space left (only {} free of {} total pool size is left)\n".format(name, round(free_space_perc, 2), free_space, total_space)
+                        set_exit_code(2)
+                    elif free_space_perc <= warning:
+                        output_info += "WARNING: STORAGE POOL {} has only {}% of free space left (only {} free of {} total pool size is left)\n".format(name, round(free_space_perc, 2), free_space, total_space)
+                        set_exit_code(1)
+                    else:
+                        output_info += "OK: STORAGE POOL {} has {}% of free space left ({} free of {} total pool size is left)\n".format(name, round(free_space_perc, 2), free_space, total_space)
+
+        except Exception as e:
+            # Catch an exception and print it
+            output_info += str(e) + "\n"
+            output_info += "WARNING: There was an error, check the message above. Check also if arguments -W (--warning) or -C (--critical) are set."
+            set_exit_code(1)
+            return output_info
+        
+        return output_info
+
     def lsallstatuses():
         global output_info
         output_info += lslun() + "\n"
@@ -275,6 +360,7 @@ if __name__ == "__main__":
             "lsinitiator": lsinitiator,
             "lsstoragepool": lsstoragepool,
             "lspsu": lspsu,
+            "capacitystoragepool": capacitystoragepool,
             "lsallstatuses": lsallstatuses,
         }
 
@@ -291,7 +377,8 @@ if __name__ == "__main__":
         lsinitiator - show initiator status (prints alias name for initiator)
         lsstoragepool - show storage_pool general status
         lspsu - show PSU status
-        lsallstatuses - show all above in one check""")
+        capacitystoragepool - used with -W and -C arguments, checks free capacity with configured arguments
+        lsallstatuses - show all checks that starts with ls in one output""")
     
     useable_commands = [
         'lslun', 
@@ -301,6 +388,7 @@ if __name__ == "__main__":
         'lsinitiator', 
         'lsstoragepool', 
         'lspsu',
+        'capacitystoragepool',
         'lsallstatuses'
         ]
 
@@ -309,6 +397,9 @@ if __name__ == "__main__":
     parser.add_argument('-u', '--username', metavar='<USERNAME>', required=True)
     parser.add_argument('-k', '--key_filename', metavar='<KEY_FILE_DESTINATION>', required=True)
     parser.add_argument('-c', '--command', metavar='<COMMAND1,COMMAND2,...,COMMANDX>', required=True)
+    parser.add_argument('-C', '--critical', metavar='<CRITICAL_PERC>', required=False)
+    parser.add_argument('-W', '--warning', metavar='<WARNING_PERC>', required=False)
+    parser.add_argument('-sp', '--storagepool', metavar='<SP_NAME>', required=False)
 
     args = parser.parse_args()
 
@@ -322,6 +413,17 @@ if __name__ == "__main__":
     username = args.username
     key_filename = args.key_filename
     commands = args.command
+
+    # Check if variables are set in args
+    if args.critical:
+        critical = int(args.critical)
+
+    if args.warning:
+        warning = int(args.warning)
+
+    if args.storagepool:
+        storage_pool_name = args.storagepool
+
 
     # SSH to Oceanstor
     ssh = paramiko.SSHClient()
