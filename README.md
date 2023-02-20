@@ -124,4 +124,7 @@ Resolution: Monitor your OceanStor by using only one command such as -> ```pytho
 
 ## 5. TODO List
 
-- [ ] Empty!
+1. Add exclude list for ISCSI LUN's
+![image](https://github.com/lowbob84/check-oceanstor.py/Icinga2_Templates/Issue_Iscsi_Initiator.png)
+2. check capacitystoragepool with more than 1 Storagepool
+![image](https://github.com/lowbob84/check-oceanstor.py/Icinga2_Templates/Issue_Storagepool.png)
