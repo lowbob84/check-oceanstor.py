@@ -38,6 +38,8 @@ Check Huawei Oceanstor through SSH
         lsstoragepool - show storage_pool general status
         lspsu - show PSU status
         capacitystoragepool - used with -W and -C arguments, checks free capacity with configured arguments
+        lsalert - show ALARM status
+        lscontroller - show CONTROLLERs status
         lsallstatuses - show all checks that starts with ls in one output
 
 optional arguments:
