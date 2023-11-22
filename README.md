@@ -114,6 +114,11 @@ CRITICAL: STORAGE POOL SP-1-RAID-TP has only 11.38% of free space left (only 1.0
 
 ```
 
+
+Output for Icingaweb2
+
+![image](https://github.com/lowbob84/check-oceanstor.py/blob/master/Icinga2_Templates/Show_checks_icingaweb2.png)
+
 ## 4. KNOWN ISSUES
 
 1. Storage Array have active WARNING: "The number of event logs is about to reach the upper limit of 50000."\
@@ -126,4 +131,7 @@ Resolution: Monitor your OceanStor by using only one command such as -> ```pytho
 
 ## 5. TODO List
 
-- [ ] Empty!
+1. Add exclude list for ISCSI LUN's
+![image](https://github.com/lowbob84/check-oceanstor.py/blob/master/Icinga2_Templates/Issue_Iscsi_Initiator.png)
+2. check capacitystoragepool with more than 1 Storagepool
+![image](https://github.com/lowbob84/check-oceanstor.py/blob/master/Icinga2_Templates/Issue_Storagepool.png)
